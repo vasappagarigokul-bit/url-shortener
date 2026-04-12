@@ -176,7 +176,8 @@ def shorten_url(request: URLRequest, db: Session=Depends(get_db)):
     path="/{short_code}",
     tags=['Redirection'],
     status_code=status.HTTP_302_FOUND,
-    description="Retrieves the original long URL from a short code and performs a 302 temporary redirect."
+    description="Retrieves the original long URL from a short code and performs a 302 temporary redirect.",
+    include_in_schema=False
 )
 def redirect_to_long_url(short_code: str, db: Session=Depends(get_db)):
     long_url = get_url_by_code(db, short_code)
