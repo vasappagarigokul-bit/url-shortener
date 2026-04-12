@@ -17,7 +17,7 @@ import time
 
 from .database import engine, SessionMaker, base
 from .schemas import URLRequest, URLResponse
-from .redis import redis_rate_limiter
+from .redis import redis_cache, redis_rate_limiter
 from .utils import rate_limiter, authorize
 from .crud import create_url, get_url_by_code
 from typing import Generator
@@ -98,7 +98,34 @@ async def get_db_health(db: Session=Depends(get_db), admin: bool=Depends(authori
             detail=f"Database error: {str(e)}"
         )
 
-
+@app.get(
+    path="/check_2",
+    tags=['Health'],
+    status_code=status.HTTP_200_OK,
+    summary="Admin only."
+)
+async def get_cache_db_health(admin: bool=Depends(authorize)):
+    try:
+        if redis_cache.ping():
+            return {
+                "status": "Ok",
+                "redis_cache_db": "Connected"
+            }
+    except ConnectionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Redis cache database connection failed: {str(e)}"
+        )
+    except ResponseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Redis cache database requests out of limit: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Redis cache database error: {str(e)}"
+        )
 
 @app.get(
     path="/check_3",
