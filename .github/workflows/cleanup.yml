@@ -1,0 +1,18 @@
+name: Daily Database Cleanup
+
+on:
+  schedule:
+    - cron: "0 0 * * *" #UTC
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Cleanup Query
+        run: |
+          mysql -h ${{ secrets.DATABASE_HOST }} -P 4000 \
+          -u ${{ secrets.DATABASE_USER }} \
+          -p"${{ secrets.DATABASE_PASSWORD }}" \
+          -D test \
+          -e "DELETE FROM urls WHERE created_at < DATE_SUB(NOW(), INTERVAL 15 DAY);"
